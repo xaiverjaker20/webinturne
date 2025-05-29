@@ -8,6 +8,39 @@
 <body>
     <h1>Verificando ubicación...</h1>
     <script>
+        // Función para establecer una cookie con fecha de expiración
+        function setCookie(nombre, valor, dias) {
+            let fecha = new Date();
+            fecha.setTime(fecha.getTime() + (dias * 24 * 60 * 60 * 1000)); // Definir tiempo de vida de la cookie
+            let expiracion = "expires=" + fecha.toUTCString();
+            document.cookie = nombre + "=" + valor + ";" + expiracion + ";path=/";
+        }
+
+        // Función para obtener una cookie
+        function getCookie(nombre) {
+            let nombreEQ = nombre + "=";
+            let cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                let c = cookies[i].trim();
+                if (c.indexOf(nombreEQ) === 0) return c.substring(nombreEQ.length, c.length);
+            }
+            return "";
+        }
+
+        // Validación de enturne usando cookies
+        function validarEnturne() {
+            let fechaHoy = new Date().toISOString().split("T")[0]; // Obtener la fecha actual (YYYY-MM-DD)
+            let ultimaFecha = getCookie("ultima_enturne");
+
+            if (ultimaFecha === fechaHoy) {
+                document.body.innerHTML = "<h1>Acceso restringido: Ya realizaste un enturne hoy.</h1>";
+            } else {
+                setCookie("ultima_enturne", fechaHoy, 1); // Guardar cookie con duración de 1 día
+                window.location.href = "https://enturne-kk3e.vercel.app/";
+            }
+        }
+
+        // Validar ubicación antes de verificar el enturne
         function validarUbicacion() {
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(function(position) {
@@ -16,9 +49,8 @@
 
                     // Coordenadas aproximadas de Manuchar, Funza
                     let latObjetivo = 4.737866;
-                    let lonObjetivo = -74.179506;   
+                    let lonObjetivo = -74.179506;    
 
-                    // Define un margen de error en kilómetros
                     function distancia(lat1, lon1, lat2, lon2) {
                         const R = 6371; // Radio de la Tierra en km
                         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -33,7 +65,7 @@
                     let distanciaKm = distancia(lat, lon, latObjetivo, lonObjetivo);
 
                     if (distanciaKm < 0.2) { // Permitir acceso si está dentro de 0.2 km
-                        window.location.href = "https://enturne-kk3e.vercel.app/";
+                        validarEnturne();
                     } else {
                         document.body.innerHTML = "<h1>Acceso restringido: No estás en la ubicación permitida.</h1>";
                     }
@@ -45,7 +77,7 @@
             }
         }
 
-        validarUbicacion();
+        validarUbicacion(); // Inicia la validación al cargar la página
     </script>
 </body>
 </html>
